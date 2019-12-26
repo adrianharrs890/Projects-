@@ -1,0 +1,320 @@
+---
+title: "Data Set"
+author: "Adrian Harris"
+date: "12/16/2019"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+library(readr)
+library(ggplot2)
+library(wesanderson)
+```
+
+```{r}
+anth_data_set_ <- read_csv("~/Desktop/anth data set .csv")
+```
+
+```{r}
+ant = anth_data_set_ 
+```
+
+```{r}
+colnames(ant) = c("Age", "Sex", "Location", "Sexual Partners",
+                  "Level of Sexual Education", 
+                  "Protection", "Race", "Ethnicity", "Prep Knowledge", 
+                  "Sexual Education Improtance Level","Who Should Be Sexual an Educator", 
+                  "Methods of Birth Control", 
+                  "Preventive Methods of STDs/STI", "Final Comments", "Name", 
+                  "Sexual Education Stigma", "Sexual Orientation")
+```
+
+```{r}
+contin <- wes_palette("Darjeeling1", 100, type = "continuous")
+```
+
+### Graph one 
+
+Ages 20 - 28. There are two from the same town and all within a 10-mile radius.
+
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = Age)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  scale_color_discrete(name = "Age")+
+  scale_fill_gradientn(colours = contin)+
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(title = "Obevastion vs Age",
+       x = "Location",
+       y = "Counts")
+
+```
+
+### Graph two 
+
+Mixed field 
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = Ethnicity)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  scale_color_discrete(name = "Ethnicity")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Ethnicity")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+
+### Graph three 
+
+Mostly Caucasian 
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = Race)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Race")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+
+### Graph four 
+
+Mixed group 
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = `Level of Sexual Education`)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Level of Sexual Education")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+### Graph five
+
+Half said yes. One with Highschool education on sexual education said he rarely uses protection. 
+
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = Protection)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Protection Usage")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+### Graph six 
+
+One with the master education knows about PRep+
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = `Prep Knowledge`)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs PRep+ Knowledge")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+
+
+
+
+### Graph seven 
+
+Most know about birth control methods 
+
+
+
+
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = `Methods of Birth Control`)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Birth Control Knowledge")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+
+```
+
+
+
+
+
+
+### Graph eight 
+
+Teachers and Parents have about an even split 
+```{r}
+
+ggplot(ant) +
+  aes(x = ant$Location, fill = `Who Should Be Sexual an Educator`)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Who Should Be Sexual an Educator")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+
+```
+
+
+### Graph nine 
+
+Most said yes 
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = `Sexual Education Stigma`)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Sexual Education Stigma")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+### Graph ten 
+
+The observation that rarely uses protection is also a homosexual this means he can be a contributor to the spread of STDs/STIs in this area.
+```{r}
+ggplot(ant) +
+  aes(x = ant$Location, fill = `Sexual Orientation`)+
+  theme_bw()+
+  geom_bar(position = "dodge")+
+  xlab("Location")+
+  ylab("Counts")+
+  ggtitle("Obevastion vs Sexual Orientation")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5))
+```
+
+### Learning Algorithm
+
+Logistic regression
+
+```{r}
+ant_code_ <- read_csv("~/Desktop/ant code .csv")
+```
+
+```{r}
+antcode = ant_code_ 
+```
+
+```{r}
+colnames(antcode) = c("Age", "Sex", "Location", "Sexual Partners",
+                  "Level of Sexual Education", 
+                  "Protection", "Race", "Ethnicity", "Prep Knowledge", 
+                  "Sexual Education Improtance Level","Who Should Be Sexual an Educator", 
+                  "Methods of Birth Control", 
+                  "Preventive Methods of STDs/STI", "Final Comments", "Name", 
+                  "Sexual Education Stigma", "Sexual Orientation")
+```
+
+```{r}
+newantcode = antcode[,-15]
+```
+
+Prediction on stigma 
+```{r}
+logreg5 = glm(newantcode$`Sexual Education Stigma`~., 
+              data = newantcode, family = binomial)
+```
+
+```{r}
+pro89 = predict(logreg5, newantcode,  type = "response")
+```
+
+```{r}
+predict16 = ifelse(pro89>.5,1,0)
+```
+
+Confusion matrix. The actuals are getting predicted as No's.
+```{r}
+table(predict16, newantcode$`Prep Knowledge`)
+```
+
+```{r}
+levels(newantcode$`Sexual Education Stigma`) = c(0, 1)
+newantcode$`Sexual Education Stigma` = as.factor(newantcode$`Sexual Education Stigma`)
+```
+
+Changing into a data frame so it can be plotted 
+```{r}
+antpre = data.frame(predict16, prob89 = pro89, 
+                      Age = newantcode$Age,
+                      Sex = newantcode$Sex,
+                      Location = newantcode$Location,
+                      Sex_Part = newantcode$`Sexual Partners`,
+                      Level_sex = newantcode$`Level of Sexual Education`,
+                      Protect = newantcode$Protection,
+                      Race = newantcode$Race,
+                      Ethic = newantcode$Ethnicity,
+                      Prep = newantcode$`Prep Knowledge`,
+                      Sex_level = newantcode$`Sexual Education Improtance Level`,
+                      Educator = newantcode$`Who Should Be Sexual an Educator`,
+                      Methods = newantcode$`Methods of Birth Control`,
+                      Std = newantcode$`Preventive Methods of STDs/STI`,
+                      Final = newantcode$`Final Comments`,
+                      Stigma = newantcode$`Sexual Education Stigma`,
+                      orin = newantcode$`Sexual Orientation`)
+
+```
+
+```{r}
+ggplot(antpre)+
+  aes(x = prob89, 
+      y = newantcode$`Sexual Education Stigma`, 
+      color = newantcode$`Sexual Education Stigma`)+
+  theme_bw()+
+  xlab("Probability")+
+  ylab("Zero for no One for yes")+
+  scale_color_discrete(name = 'Yes or No')+
+  ggtitle("Logistic Regression on Stigma")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  geom_point()+
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 2))
+```
+
+
+ Not enough *data* to perform the learning algorithm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
