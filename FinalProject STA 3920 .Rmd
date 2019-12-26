@@ -1,0 +1,541 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+# Final Project: Adrian Harris & Christ Rangkas
+
+```{r}
+library(randomForest)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(rpart)
+library(e1071)
+```
+# Overview
+We want to classify the data into different groups. Random Forest; We predicted the generation based on the other attributes. We then removed the some attrubutes in order to run the model.
+
+
+# Pre-Processing
+Cleaning the data and getting rid of atttributes that contain more that 53 catoregies. Both steps are important for categorizing data for random forests algothrim in R. Except country because we still have to filter thorugh it.
+
+# Omitting the Null Values
+```{r}
+suicide <- read.csv("~/Desktop/master 7.csv", header=TRUE)
+suicide = na.omit(suicide) 
+str(suicide)
+```
+# Getting rid of Attributes with more than 53 Categories
+```{r}
+newsuicide = suicide[,-c(8,10)]
+str(newsuicide)
+```
+# America Data Set
+We decided to subset the data only to have American records.
+```{r}
+usa = newsuicide %>% filter(country == "United States")
+str(usa)
+```
+# Removing the country variable beccause we know its the USA
+```{r}
+finalusa = usa[,-c(1)]
+str(finalusa)
+```
+# Data Seperation
+## Training and Testing Set
+```{r}
+set.seed(300)
+sample = sample(2, nrow(finalusa), replace = T, prob = c(.7,.3))
+train = finalusa[sample ==1,]
+test = finalusa[sample ==2,]
+```
+# Random Forest
+Before we didn’t have the mtry and importance.
+```{r}
+set.seed(300)
+model1 = randomForest(generation~., data = train, mtry = 2, importance = T)
+print(model1)
+```
+# Prediction
+With this prediction on the training data, it shows no error because this model was already run on this data senstivity.
+```{r}
+p1 = predict(model1, train)
+confusionMatrix(p1, train$generation)
+p1
+```
+# On Test Data
+Our data hasn't been seen by this random forest so the rate of error increases. We see that the model has difficulty predicting Boomers, Millenails and Silent.
+```{r}
+p2 = predict(model1, test)
+confusionMatrix(p2, test$generation)
+p2
+```
+# Error
+Error decreases to around 250 trees.
+```{r}
+plot(model1, 
+     main = "Model One Error")
+```
+
+
+
+
+
+# Tuning
+
+## We will use all features, except for *Generation*, as predictors because we want to predict the response of the *Generation* feature.
+Note: step ~ what we assign the mytry to be.
+```{r}
+t = tuneRF(train[,-9], train[,9],
+       stepFactor = .5,
+       plot = T,
+       ntreeTry = 500, 
+       trace = T,
+       improve = .05)
+```
+
+
+
+
+
+
+# Variance Plot
+```{r}
+varImpPlot(model1)
+```
+
+
+
+
+
+## *Quantity of Nodes*
+```{r}
+hist(treesize(model1))
+```
+
+
+
+
+
+
+
+# Conclusion
+The lowest Out-of-Bag error we saw was around 13% which isn’t bad. But overall, random forest wasn't optimal for this data set because of the limitation of categories. For classifing generation based on the values. Boomers get mistaken for GEN X, etc by looking at the confusion matrix.
+
+# Clustering
+
+# Overview
+For clustering, we're going to group countries into each “suicide category.” The clusters are unknown as of now, so it will be hierarchical complete linkage. From there, we will observe what group has the highest value present in each group.
+```{r}
+dis = dist(finalusa, method = "maximum")
+hc1 = hclust(dis, method = "complete")
+plot(hc1, cex = 0.6 , hang = -1, labels = finalusa$generation,
+     xlab = "Generation")
+```
+
+
+
+
+
+The original had three, but then it broke it down to five.
+```{r}
+sub_grp = cutree(hc1, k = 5)
+```
+# Mutation
+We included the clusters to the end of the data set for each observation.
+```{r}
+clustersss = finalusa %>% mutate(cluster = sub_grp)
+```
+
+
+```{r}
+ggplot(clustersss)+
+  aes(x = finalusa$suicides_no, 
+      y = finalusa$population, 
+      color = sub_grp)+
+      xlab(" Suicides")+
+      ylab("Population ")+
+      theme_bw()+
+     ggtitle("Clusters in relation to suicides and population in the USA")+
+     theme(plot.title = element_text(hjust = 0.5))+
+     geom_point()+
+  scale_color_gradientn(colours = rainbow(5))
+```
+
+## *Cluster One*
+The Silent generation and the G.I. have lowest number of suicides. But after further investigation, they had more suicudes per 100k population.
+```{r}
+clusterone = clustersss %>% filter(sub_grp == "1")
+table(clusterone$sex, clusterone$generation)
+```
+## *Cluster Two*
+## Mix of mostly Millennials and Generation X
+```{r}
+clustertwo = clustersss %>% filter(sub_grp == "2")
+table(clustertwo$sex, clustertwo$generation)
+```
+
+
+Looking into why the clusters are separated and what generations are on each side of the half way point I set. It is still a mixed set. 
+```{r}
+clustersss %>% filter(sub_grp == "2" & suicides_no > 3000)
+```
+
+```{r}
+clustersss %>% filter(sub_grp == "2" & suicides_no < 3000)
+```
+
+
+## *Cluter Three*
+Boomers and Silent cluster; Two and Three had around the same amount of population, but cluster three has about double more suicides.
+```{r}
+clusterthree = clustersss %>% filter(sub_grp == "3")
+table(clusterthree$sex, clusterthree$generation)
+```
+
+Looking into why the clusters are separated and what generations are on each side of the half way point I set. It is still a mixed set between boomers and silent generation 
+```{r}
+clustersss %>% filter(sub_grp == "3" & suicides_no < 6000)
+```
+
+```{r}
+clustersss %>% filter(sub_grp == "3" & suicides_no > 6000)
+```
+
+
+## *Cluster Four*
+Boomers have higher popuation than cluster three, but lower on average when it comes to suicide.
+```{r}
+clusterfour = clustersss %>% filter(sub_grp == "4")
+table(clusterfour$sex, clusterfour$generation)
+```
+## *Cluster Five*
+Boomers and Generation X have the most suciide because of higher population and highest HDI.
+```{r}
+clusterfive = clustersss %>% filter(sub_grp == "5")
+table(clusterfive$sex, clusterfive$generation)
+```
+
+This cluster is being tied together through population GenX is accounting for most of the suicides in the group  
+```{r}
+highsui = clustersss %>% filter(sub_grp == "5" & suicides_no > 6000)
+```
+
+```{r}
+highsui = clustersss %>% filter(sub_grp == "5" & suicides_no < 6000)
+```
+
+
+## *Cluster Attributes*
+
+
+```{r}
+clusteratr = clustersss %>% group_by(cluster) %>% 
+  summarize(nosui= mean(suicides_no), 
+            pop = mean(population),
+            suic10 = mean(suicides.100k.pop),
+            hdi = mean(HDI.for.year),
+            gdpmean = mean(gdp_per_capita....))
+clusteratr
+```
+# Support Vector Machines
+```{r}
+qplot(suicides_no,population, data = finalusa, color = generation)
+```
+
+
+
+
+
+
+# Using Radial Kernel
+There are a total of 115 Support Vectors;
+Boomers = 12
+G.I. Generation = 18
+Generation X = 22
+Generation Z = 29
+Millenials = 24
+Silent = 10
+```{r}
+model = svm(generation~., data = finalusa, kernel = "radial")
+summary(model)
+```
+# SVM Classification Plot
+```{r}
+plot(model, data = finalusa, population~suicides_no , slice = list(HDI.for.year = 1, suicides.100k.pop = 6))
+```
+
+
+
+
+
+# Prediction
+```{r}
+prediction = predict(model, finalusa)
+prediction
+t = table(Predicted = prediction, Actual = finalusa$generation)
+t
+```
+# The Model Misclassified by about 17.5% *Ouch*
+```{r}
+1-sum(diag(t))/sum(t)
+```
+
+
+
+
+
+
+# Using Linear Kernel
+There are a total of 91 Support Vectors
+Boomers = 6
+G.I. Generation = 16
+Generation X = 18
+Generation Z = 28
+Millenials = 18
+Silent = 5
+```{r}
+lmodel = svm(generation~., data = finalusa, kernel = "linear")
+summary(lmodel)
+```
+# SVM Classification Plot
+```{r}
+plot(lmodel, data = finalusa, population~suicides_no , slice = list(HDI.for.year = 1, suicides.100k.pop = 6))
+```
+
+
+
+
+
+# Prediction 
+```{r}
+lprediction = predict(lmodel, finalusa)
+lprediction
+lt = table(Predicted = lprediction, Actual = finalusa$generation)
+lt
+```
+# This Model Misclassed by about 9.17%
+```{r}
+1-sum(diag(lt))/sum(lt)
+```
+
+
+
+
+
+
+# Using Polynomial Kernel
+There are a total of 117 Support Vectors
+Boomers = 10
+G.I. Generation = 18
+Generation X = 24
+Generation Z = 29
+Millenials = 26
+Silent = 10
+```{r}
+pmodel = svm(generation~., data = finalusa, kernel = "polynomial")
+summary(pmodel)
+```
+# SVM Classification Plot
+```{r}
+plot(pmodel, data = finalusa, population~suicides_no , slice = list(HDI.for.year = 1, suicides.100k.pop = 6))
+```
+
+
+
+
+
+# Prediction 
+```{r}
+pprediction = predict(pmodel, finalusa)
+pprediction
+pt = table(Predicted = pprediction, Actual = finalusa$generation)
+pt
+```
+# This Model Misclassed by about 48.3% *Disgusting*
+```{r}
+1-sum(diag(pt))/sum(pt)
+```
+
+
+# Log Regression 
+
+I started by using backwards selection and then just settled on using 
+these predictors 
+
+
+```{r}
+set.seed(300)
+sample = sample(2, nrow(finalusa), replace = T, prob = c(.7,.3))
+train = finalusa[sample ==1,]
+test = finalusa[sample ==2,]
+```
+
+
+```{r}
+logreg = glm(sex ~ train$suicides_no + 
+               train$generation + 
+               train$population , data = train, family = binomial)
+
+```
+
+Agian number of suicides and population are big predictors for this data set
+```{r}
+summary(logreg)
+```
+
+```{r}
+coef(logreg)
+```
+
+Low percent is to a female and high is for a male
+
+```{r}
+pro = predict(logreg, train,  type = "response")
+```
+
+```{r}
+head(pro)
+```
+
+```{r}
+head(train)
+```
+
+
+Dummy variable 
+```{r}
+contrasts(train$sex)
+```
+
+
+Error 
+```{r}
+predict1 = ifelse(pro>.5,1,0)
+```
+
+```{r}
+table(predict1, train$sex)
+```
+
+The error is very minimal on training set 
+```{r}
+6/80
+```
+```{r}
+logreg2 = glm(sex ~ test$suicides_no + 
+               test$generation + 
+               test$population , data = test, family = binomial)
+```
+
+
+
+Test 
+```{r}
+pro2 = predict(logreg2, test,  type = "response")
+predict2 = ifelse(pro2>.5,1,0)
+
+```
+
+
+
+Same error on the testing set  
+```{r}
+table(predict2, test$sex)
+```
+
+```{r}
+3/40
+```
+
+
+Turning the Predictions into data set so they can be plotted 
+```{r}
+trainpre = data.frame(predict1, prob1 = pro, 
+                  suicides = train$suicides_no,
+                  gen = train$generation,
+                  pop = train$population)
+```
+
+```{r}
+testpre = data.frame(predict2, prob2 = pro2, 
+                     suicides = test$suicides_no,
+                     gen = test$generation,
+                     pop = test$population)
+```
+
+Train 
+```{r}
+ggplot(trainpre)+
+  aes(x = prob1, 
+      y = train$sex, 
+      color = train$sex)+
+  theme_bw()+
+  xlab("Gender")+
+  ylab("Probability")+
+  scale_color_discrete(name = 'Gender')+
+  ggtitle("Logistic Regression on Training Set")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  geom_point()
+```
+
+
+
+
+Test 
+```{r}
+ggplot(testpre)+
+  aes(x = prob2, 
+      y = test$sex, 
+      color = test$sex)+
+  xlab("Gender")+
+  ylab("Probability")+
+  scale_color_discrete(name = 'Gender')+
+  ggtitle("Logistic Regression on Testing Set")+
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5))+
+  geom_point()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Conclusion
+By performing clustering, random forest, and support vector machine techniques, we saw that boomers and the silents generation are closely related. On the other hand Gen X, Boomers, and Millenials share some relation. Genz is the most unique.
+
+We thought we had made a mistake in our analysis because if they are close, they might be grouped together. But from looking at each cluster, specifically cluster two, that wasn’t the case.
+
+The group that is at high risk for suicide is cluster five and the group that is at a lower risk for suicide is cluster two.
+
+# Road Blocks & Struggles
+Our main struggles mainly were that we hoped we did not lose *value* in our dataset due to omitting null values. In addition, we aren't to confident with our findings using svm techniques after looking at our classification plots. We may need to study more on this technique. Logistic Regression in R markdown wasn't taking the table function for the test set. I had to run it a different a different model. When I did this in the script there were four miss classifications comapared to the three. This make little difference but could be fatal on larger data sets. This could of been solved if there was no partionting of the data set into training and test sets. 
+
+
+
+### Contribution 
+
+There was not alot of learning methods that were applied on this dataset.We want to get more out of this data set. 
+
+### References 
+
+
+https://www.kaggle.com/russellyates88/suicide-rates-overview-1985-to-2016
+
+The Introduction to Statisical Learning 
+
